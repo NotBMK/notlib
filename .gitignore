@@ -1,3 +1,4 @@
 /build
-.vscode
-CMakeList.txt
+/.vscode
+
+CMakeLists.txt
