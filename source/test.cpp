@@ -17,6 +17,11 @@ int main(int argc, char const *argv[])
         }
     });
 
+    test.setDefault([](Module& mod, const std::string& str)
+    {
+        mod.utils().report("No options provided, default action taken.");
+    });
+
     test.report(true);
 
     test.parse(argc, argv);

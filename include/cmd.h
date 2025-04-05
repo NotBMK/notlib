@@ -13,7 +13,7 @@
 class Module : public ReportInterface
 {
     using Callback = std::function<void(Module& mod)>;
-    using DefaultFunc = std::function<void(const std::string&)>;
+    using DefaultFunc = std::function<void(Module& mod, const std::string&)>;
 
     enum Config
     {
@@ -129,7 +129,7 @@ public:
             else
             {
                 if (_M_default)
-                    _M_default(*arg);
+                    _M_default(*this, *arg);
                 else
                     _M_report("[UNKNOWN] '" + *arg + "'");
             }
