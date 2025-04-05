@@ -3,7 +3,7 @@
 
 #include <type_traits>
 #include <iostream>
-#include <source_location>
+#include <string>
 
 template <class T>
 struct Singleton
@@ -37,74 +37,38 @@ struct UnInit
     operator T& () noexcept { return *(this->get()); }
 };
 
-template <typename Class>
-class View
+struct ReportInterface
 {
-protected:
-
-    constexpr
-    View() { }
-
 public:
 
-    template <typename T, T Class::* MemPtr>
-    class Member
+    static
+    void report(const std::string& message, bool throw_msg = false)
     {
-    public:
-    
-        constexpr
-        Member() = delete;
-    
-        constexpr inline
-        T get() const noexcept
-        {
-            return ((Class*)this)->*MemPtr;
-        }
-
-        constexpr inline
-        void set(const T& value) noexcept
-        {
-            ((Class*)this)->*MemPtr = value;
-        }
-    };
-
-    template <typename T, T Class::* MemPtr>
-    class Getter : public Member<T, MemPtr>
-    {
-    private:
-        constexpr inline
-        void set(const T& value) noexcept = delete;
-    };
-
-    template <typename T, T Class::* MemPtr>
-    class Setter : public Member<T, MemPtr>
-    {
-    private:
-        constexpr inline
-        T get() const noexcept = delete;
-    };
+        return _S_do_report(message, throw_msg);
+    }
 
 protected:
 
-    template <typename T, T Class::* MemPtr>
-    constexpr
-    Member<T, MemPtr>* getMember() noexcept
+    static
+    void _S_do_report(const std::string& message, bool throw_msg)
     {
-        return ((Member<T, MemPtr>*)this);
+        std::string msg = _S_make_message("REPORT", message);
+        if (throw_msg)
+            throw std::runtime_error(msg);
+        else
+            std::cerr << msg << '\n';
     }
 
-    template <typename T, T Class::* MemPtr>
-    constexpr
-    Getter<T, MemPtr>* getGetter() const noexcept
+    static
+    std::string _S_make_message(const std::string& hint, const std::string& message)
     {
-        return ((Getter<T, MemPtr>*)this);
-    }
-
-    template <typename T, T Class::* MemPtr>
-    constexpr
-    Setter<T, MemPtr>* getSetter() noexcept
-    {
-        return ((Setter<T, MemPtr>*)this);
+        std::string msg;
+        msg.push_back('[');
+        msg += hint;
+        msg.push_back(']');
+        msg.push_back(' ');
+        msg += message;
+        return msg;
     }
 };
 

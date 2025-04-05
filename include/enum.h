@@ -74,7 +74,7 @@ public:
     Enum operator~ () const noexcept
     {
         Enum ret;
-        ret.value = static_cast<T>(static_cast<unsigned long>(~this->value));
+        ret.value = static_cast<T>(~static_cast<unsigned long>(this->value));
         return ret;
     }
 

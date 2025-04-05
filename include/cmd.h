@@ -7,11 +7,12 @@
 #include <sstream>
 #include <map>
 
+#include <objh.h>
 #include <enum.h>
 
-class Module
+class Module : public ReportInterface
 {
-    using Callback = std::function<void()>;
+    using Callback = std::function<void(Module& mod)>;
     using DefaultFunc = std::function<void(const std::string&)>;
 
     enum Config
@@ -74,9 +75,14 @@ class Module
             return _M_mod._M_report(msg, throw_msg);
         }
 
-        bool hasNextArg() const
+        bool nextIsArg() const
         {
             return good() && !_M_mod._M_is_option(peek());
+        }
+
+        bool nextIsOpt() const
+        {
+            return !nextIsArg();
         }
 
     private:
@@ -87,7 +93,10 @@ class Module
 public:
 
     Module(const std::string& name)
-    : _M_name(name) { }
+    : _M_name(name)
+    {
+        _M_regist_option("help", "get help and usage", _S_help);
+    }
 
     Module(const Module&) = delete;
     Module(Module&&) = delete;
@@ -115,7 +124,7 @@ public:
             Callback call = _M_get_callback(*arg);
             if (call)
             {
-                call();
+                call(*this);
             }
             else
             {
@@ -127,9 +136,14 @@ public:
         }
     }
 
-    void addOption(const std::string& full_name, Callback call_back)
+    void addOption(const std::string& full_name, Callback operation)
     {
-        _M_regist_option(full_name, "", call_back);
+        _M_regist_option(full_name, "", operation);
+    }
+
+    void addOption(const std::string& full_name, const std::string& description, Callback operation)
+    {
+        _M_regist_option(full_name, description, operation);
     }
 
     void setDefault(DefaultFunc func)
@@ -138,21 +152,44 @@ public:
     }
 
     constexpr
-    void noReport() noexcept
+    void report(bool value) noexcept
     {
-        _M_config |= NO_REPORT;
+        if (value)
+            _M_config |= NO_REPORT;
+        else
+            _M_config &= ~NO_REPORT;
     }
 
 private:
 
+    static
+    void _S_help(Module& mod)
+    {
+        std::cout << mod._M_name << " Usage: [-OPTIONS] [ARGS...]" << '\n';
+        for (auto info : mod._M_options)
+        {
+            std::cout << "  " << info.short_name << ' ' << info.name << '\n';
+            if (!info.description.empty())
+            {
+                std::cout.put('\t');
+                std::cout.put('\t');
+                for (const char& ch : info.description)
+                {
+                    std::cout.put(ch);
+                    if (ch == '\n')
+                    {
+                        std::cout.put('\t');
+                        std::cout.put('\t');
+                    }
+                }
+                std::cout.put('\n');
+            }
+        }
+    }
+
     void _M_report(const std::string& message, bool throw_msg = false) const
     {
-        std::string msg = "[REPORT] " + message;
-        if (throw_msg)
-            throw std::runtime_error(msg);
-        else
-        if (!(_M_config & NO_REPORT))
-            std::cerr << msg << '\n';
+        _S_do_report(_S_make_message(this->_M_name, message), throw_msg);
     }
 
     void _M_regist_option(const std::string& opt, const std::string& description, Callback call_back)
