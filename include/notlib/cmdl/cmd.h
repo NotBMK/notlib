@@ -7,8 +7,8 @@
 #include <sstream>
 #include <map>
 
-#include <objh.h>
-#include <enum.h>
+#include <notlib/crtp/objh.h>
+#include <notlib/crtp/enum.h>
 
 class Module : public ReportInterface
 {
